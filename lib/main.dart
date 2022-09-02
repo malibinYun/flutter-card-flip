@@ -44,7 +44,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _core = FlipCardCore();
 
     _core.stream.listen((event) {
-      if (event is ResetEvent) {
+      if (event is ResetState) {
         setState(() {
           _randomImageNames = event.randomImageNames;
           _cardKeys.addAll(_randomImageNames.map((e) => GlobalKey<FlipCardState>()));
@@ -52,7 +52,7 @@ class _MyHomePageState extends State<MyHomePage> {
         });
       }
 
-      if (event is CheckCardEvent) {
+      if (event is CheckCardState) {
         setState(() {
           _randomImageNames = event.randomImageNames;
           _toggleCardToFront();
@@ -60,7 +60,7 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     });
 
-    _core.reset();
+    _core.add(FlipCardEvent.init);
   }
 
   @override
@@ -113,7 +113,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          _core.reset();
+          _core.add(FlipCardEvent.reset);
         },
         child: const Icon(Icons.refresh),
       ),

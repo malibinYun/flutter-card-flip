@@ -1,24 +1,48 @@
 import 'package:flip_card_game/asset_name.dart';
 import 'package:bloc/bloc.dart';
 
-abstract class FlipCardEvent {}
+abstract class GameState {}
 
-class InitialEvent extends FlipCardEvent {}
+class InitialState extends GameState {}
 
-class ResetEvent extends FlipCardEvent {
-  ResetEvent({required this.randomImageNames});
-
-  final List<String> randomImageNames;
-}
-
-class CheckCardEvent extends FlipCardEvent {
-  CheckCardEvent({required this.randomImageNames});
+class ResetState extends GameState {
+  ResetState({required this.randomImageNames});
 
   final List<String> randomImageNames;
 }
 
-class FlipCardCore extends Cubit<FlipCardEvent> {
-  FlipCardCore() : super(InitialEvent());
+class CheckCardState extends GameState {
+  CheckCardState({required this.randomImageNames});
+
+  final List<String> randomImageNames;
+}
+
+enum FlipCardEvent {
+  init,
+  reset,
+  check,
+}
+
+class FlipCardCore extends Bloc<FlipCardEvent, GameState> {
+  FlipCardCore() : super(InitialState()) {
+    on<FlipCardEvent>((event, emit) {
+      switch (event) {
+        case FlipCardEvent.init:
+        case FlipCardEvent.reset:
+          _reset();
+          emit(ResetState(randomImageNames: _randomImageNames));
+          break;
+        case FlipCardEvent.check:
+          if (_backCardIndexes.length >= 2) {
+            _checkCardIsEqual();
+            emit(CheckCardState(randomImageNames: _randomImageNames));
+          }
+          break;
+        default:
+          break;
+      }
+    });
+  }
 
   final _imageNames = [
     AssetImageName.orange,
@@ -32,8 +56,8 @@ class FlipCardCore extends Cubit<FlipCardEvent> {
   int get backCardLength => _backCardIndexes.length;
 
   final List<String> _randomImageNames = [];
-  
-  void reset() {
+
+  void _reset() {
     // add 2 times
     _randomImageNames.clear();
     _randomImageNames.addAll(_imageNames);
@@ -41,19 +65,15 @@ class FlipCardCore extends Cubit<FlipCardEvent> {
 
     // shuffle
     _randomImageNames.shuffle();
-
-    emit(ResetEvent(randomImageNames: _randomImageNames));
   }
 
   void toggleCard(int index) {
     _backCardIndexes.add(index);
 
-    _checkCardIsEqual();
+    add(FlipCardEvent.check);
   }
 
   void _checkCardIsEqual() {
-    if (_backCardIndexes.length < 2) return;
-
     String firstCardName = _randomImageNames[_backCardIndexes[0]];
     String secondCardName = _randomImageNames[_backCardIndexes[1]];
     if (firstCardName == secondCardName) {
@@ -62,7 +82,5 @@ class FlipCardCore extends Cubit<FlipCardEvent> {
     }
 
     _backCardIndexes.clear();
-
-    emit(CheckCardEvent(randomImageNames: _randomImageNames));
   }
 }
